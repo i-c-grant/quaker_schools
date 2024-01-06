@@ -13,7 +13,19 @@ from tqdm import tqdm
 @click.argument("output_path")
 @click.option("--max-pages", default=50)
 def main(jp2_zip_url, output_path, max_pages):
-    output_dir = Path(output_path).parent
+
+    if output_path.endswith(".pdf"):
+        output_dir = Path(output_path).parent
+    else:
+        output_dir = Path(output_path)
+        output_path = output_dir / "output.pdf"
+
+        # ask user whether to proceed
+    click.confirm(
+        f"\nDownload item at {jp2_zip_url} and convert to PDF? \nOutput will be saved in {output_dir}/.",
+        abort=True,
+    )
+
     zip_name = "temp_archive.zip"
 
     output_dir.mkdir(parents=True, exist_ok=True)
@@ -46,7 +58,9 @@ def main(jp2_zip_url, output_path, max_pages):
             zip_file.extractall(temp_dir)
 
         file_paths = sorted(temp_dir.glob("**/*.jp2"))
-        page_groups = [file_paths[i:i+max_pages] for i in range(0, len(file_paths), max_pages)]
+        page_groups = [
+            file_paths[i : i + max_pages] for i in range(0, len(file_paths), max_pages)
+        ]
 
         for i, page_group in enumerate(page_groups):
             output_file_name = f"{str(output_path).rsplit('.', 1)[0]}_{i + 1}.pdf"
